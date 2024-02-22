@@ -1,0 +1,21 @@
+identity:
+  postgresql:
+    networkPolicy:
+      ingressRules:
+        readReplicasAccessOnlyFrom:
+          customRules: {}
+        primaryAccessOnlyFrom:
+          customRules: {}
+      egressRules:
+        customRules: {}
+
+keycloak:
+  postgresql:
+    networkPolicy:
+      ingressRules:
+        readReplicasAccessOnlyFrom:
+          customRules: {}
+        primaryAccessOnlyFrom:
+          customRules: {}
+      egressRules:
+        customRules: {}
