@@ -17,11 +17,35 @@ limitations under the License.
 package util
 
 import (
+	"fmt"
+	"github.com/stretchr/testify/assert"
+	"helm.sh/helm/v3/pkg/chart/loader"
 	"os"
 	"testing"
 
 	chart "helm.sh/helm/v4/pkg/chart/v2"
 )
+
+func TestValidateJesse(t *testing.T) {
+	values, err := ReadValuesFile("./testdata/postgres-values.yaml")
+	if err != nil {
+		t.Fatalf("Error reading YAML file: %s", err)
+	}
+	fmt.Print("Jesse hi\n", values, "\n")
+
+	warnings := make([]string, 0)
+	printf := func(format string, v ...interface{}) {
+		t.Logf(format, v...)
+		warnings = append(warnings, fmt.Sprintf(format, v...))
+	}
+	chartchart, _ := loader.Load("./testdata/camunda-platform-9.1.2.tgz")
+
+	_, err = coalesce(printf, chartchart, values, "cpt", false)
+	assert.NotNil(t, []interface{}{})
+	assert.NotNil(t, map[string]interface{}{})
+
+	assert.NotContains(t, warnings, "warning: destination for cpt.camunda-platform.identity.postgresql.networkPolicy.egressRules.customRules is a table. Ignoring non-table value ([])")
+}
 
 func TestValidateAgainstSingleSchema(t *testing.T) {
 	values, err := ReadValuesFile("./testdata/test-values.yaml")
