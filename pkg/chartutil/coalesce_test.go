@@ -19,6 +19,7 @@ package chartutil
 import (
 	"encoding/json"
 	"fmt"
+	"sigs.k8s.io/yaml"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -694,6 +695,29 @@ func TestCoalesceValuesWarnings(t *testing.T) {
 
 }
 
+type ValuesType map[string]interface{}
+
+func TestMarshal(t *testing.T) {
+	contents := []byte("customRules: {}")
+	multiline := []byte(`
+customRules:
+  test1:
+    val1: hi
+`)
+	output := ValuesType{}
+	multilineoutput := ValuesType{}
+	_ = yaml.Unmarshal(contents, &output)
+	_ = yaml.Unmarshal(multiline, &multilineoutput)
+
+	fmt.Print("output=", output, "\n")
+	fmt.Print("is_table=", istable(output), "\n")
+
+	fmt.Print("multiline output=", multilineoutput, "\n")
+	fmt.Print("multiline is_table=", istable(multilineoutput), "\n")
+
+	fmt.Print("emptystring is_table=", istable(""), "\n")
+}
+
 func TestCoalesceValuesWarningsWithEmptyDefaultMaps(t *testing.T) {
 
 	c := withDeps(&chart.Chart{
@@ -701,6 +725,8 @@ func TestCoalesceValuesWarningsWithEmptyDefaultMaps(t *testing.T) {
 		Values: map[string]interface{}{
 			"something": map[string]interface{}{
 				"somethingElse": []interface{}{},
+				"is_src":        true,
+				"is_chart":      true,
 			},
 		},
 	})
@@ -708,6 +734,8 @@ func TestCoalesceValuesWarningsWithEmptyDefaultMaps(t *testing.T) {
 	vals := map[string]interface{}{
 		"something": map[string]interface{}{
 			"somethingElse": map[string]interface{}{},
+			"is_dst":        true,
+			"is_values":     true,
 		},
 	}
 
