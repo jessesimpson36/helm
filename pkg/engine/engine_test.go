@@ -143,8 +143,9 @@ func TestValuesHackAffectsSubchart(t *testing.T) {
 	// of the subchart
 	c, _ := loader.Load("/home/jesse/code/jesse-subchart-values-hacktest")
 	v, _ := chartutil.ReadValuesFile("/home/jesse/code/jesse-subchart-values-hacktest/values-override.yaml")
+	val, _ := chartutil.CoalesceValues(c, v)
 	vals := map[string]interface{}{
-		"Values": v.AsMap(),
+		"Values": val.AsMap(),
 	}
 	out, err := Render(c, vals)
 	if err != nil {
