@@ -18,6 +18,8 @@ package engine
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
+	"helm.sh/helm/v3/pkg/chart/loader"
 	"path"
 	"strings"
 	"sync"
@@ -134,6 +136,24 @@ func TestRender(t *testing.T) {
 			t.Errorf("Expected %q, got %q", data, out[name])
 		}
 	}
+}
+
+func TestValuesHackAffectsSubchart(t *testing.T) {
+	// This test is to validate the assumption that overwriting values in a parent subchart will affect the output
+	// of the subchart
+	c, _ := loader.Load("/home/jesse/code/jesse-subchart-values-hacktest")
+	v, _ := chartutil.ReadValuesFile("/home/jesse/code/jesse-subchart-values-hacktest/values-override.yaml")
+	vals := map[string]interface{}{
+		"Values": v.AsMap(),
+	}
+	out, err := Render(c, vals)
+	if err != nil {
+		t.Errorf("Failed to render templates: %s", err)
+	}
+	assert.NotNil(t, out)
+	data := strings.TrimSpace(out["jesse-subchart-values-hacktest/charts/keycloak/templates/ingress.yaml"])
+	fmt.Println(data)
+	assert.NotEmpty(t, data)
 }
 
 func TestRenderRefsOrdering(t *testing.T) {
