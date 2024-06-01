@@ -66,6 +66,7 @@ func funcMap() template.FuncMap {
 		"lookup": func(string, string, string, string) (map[string]interface{}, error) {
 			return map[string]interface{}{}, nil
 		},
+		"getCatFact": func() string { return "not implmented" },
 	}
 
 	for k, v := range extra {

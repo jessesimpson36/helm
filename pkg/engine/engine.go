@@ -17,8 +17,11 @@ limitations under the License.
 package engine
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -218,6 +221,28 @@ func (e Engine) initFunMap(t *template.Template) {
 			}
 		}
 		return val, nil
+	}
+
+	type CatFact struct {
+		Fact   string `json:"fact"`
+		Length int    `json:"length"`
+	}
+	funcMap["getCatFact"] = func() string {
+		resp, err := http.Get("https://catfact.ninja/fact")
+		if err != nil {
+			return "Error retrieving cat fact"
+		}
+		defer resp.Body.Close()
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return "Error closing response body"
+		}
+		var fact CatFact
+		err = json.Unmarshal(body, &fact)
+		if err != nil {
+			return "Some error unmarshaling json"
+		}
+		return fact.Fact
 	}
 
 	// Override sprig fail function for linting and wrapping message

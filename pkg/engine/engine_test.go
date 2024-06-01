@@ -157,6 +157,26 @@ func TestValuesHackAffectsSubchart(t *testing.T) {
 	assert.NotEmpty(t, data)
 }
 
+func TestSometimesJesseJustBe(t *testing.T) {
+	// This test is to validate the assumption that overwriting values in a parent subchart will affect the output
+	// of the subchart
+	c, _ := loader.Load("/home/jesse/code/camunda-platform-helm/charts/camunda-platform")
+
+	v, _ := chartutil.ReadValuesFile("/tmp/together.yaml")
+	val, _ := chartutil.CoalesceValues(c, v)
+	vals := map[string]interface{}{
+		"Values": val.AsMap(),
+	}
+	out, err := Render(c, vals)
+	if err != nil {
+		t.Errorf("Failed to render templates: %s", err)
+	}
+	assert.NotNil(t, out)
+	data := strings.TrimSpace(out["jesse-subchart-values-hacktest/charts/keycloak/templates/ingress.yaml"])
+	fmt.Println(data)
+	assert.NotEmpty(t, data)
+}
+
 func TestRenderRefsOrdering(t *testing.T) {
 	parentChart := &chart.Chart{
 		Metadata: &chart.Metadata{
