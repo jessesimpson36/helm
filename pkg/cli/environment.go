@@ -25,18 +25,13 @@ package cli
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/spf13/pflag"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/client-go/rest"
 
-	"helm.sh/helm/v4/internal/version"
 	"helm.sh/helm/v4/pkg/helmpath"
-	"helm.sh/helm/v4/pkg/kube"
 )
 
 // defaultMaxHistory sets the maximum number of releases to 0: unlimited
@@ -51,7 +46,6 @@ const defaultQPS = float32(0)
 // EnvSettings describes all of the environment settings.
 type EnvSettings struct {
 	namespace string
-	config    *genericclioptions.ConfigFlags
 
 	// KubeConfig is the path to the kubeconfig file
 	KubeConfig string
@@ -113,32 +107,6 @@ func New() *EnvSettings {
 	env.Debug, _ = strconv.ParseBool(os.Getenv("HELM_DEBUG"))
 
 	// bind to kubernetes config flags
-	config := &genericclioptions.ConfigFlags{
-		Namespace:        &env.namespace,
-		Context:          &env.KubeContext,
-		BearerToken:      &env.KubeToken,
-		APIServer:        &env.KubeAPIServer,
-		CAFile:           &env.KubeCaFile,
-		KubeConfig:       &env.KubeConfig,
-		Impersonate:      &env.KubeAsUser,
-		Insecure:         &env.KubeInsecureSkipTLSVerify,
-		TLSServerName:    &env.KubeTLSServerName,
-		ImpersonateGroup: &env.KubeAsGroups,
-		WrapConfigFn: func(config *rest.Config) *rest.Config {
-			config.Burst = env.BurstLimit
-			config.QPS = env.QPS
-			config.Wrap(func(rt http.RoundTripper) http.RoundTripper {
-				return &kube.RetryingRoundTripper{Wrapped: rt}
-			})
-			config.UserAgent = version.GetUserAgent()
-			return config
-		},
-	}
-	if env.BurstLimit != defaultBurstLimit {
-		config = config.WithDiscoveryBurst(env.BurstLimit)
-	}
-	env.config = config
-
 	return env
 }
 
@@ -247,9 +215,6 @@ func (s *EnvSettings) EnvVars() map[string]string {
 
 // Namespace gets the namespace from the configuration
 func (s *EnvSettings) Namespace() string {
-	if ns, _, err := s.config.ToRawKubeConfigLoader().Namespace(); err == nil {
-		return ns
-	}
 	if s.namespace != "" {
 		return s.namespace
 	}
@@ -261,7 +226,3 @@ func (s *EnvSettings) SetNamespace(namespace string) {
 	s.namespace = namespace
 }
 
-// RESTClientGetter gets the kubeconfig from EnvSettings
-func (s *EnvSettings) RESTClientGetter() genericclioptions.RESTClientGetter {
-	return s.config
-}
