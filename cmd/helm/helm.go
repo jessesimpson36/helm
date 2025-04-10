@@ -22,6 +22,8 @@ import (
 	chartutil "helm.sh/helm/v4/pkg/chart/v2/util"
 	"helm.sh/helm/v4/pkg/engine"
 	"log"
+	"syscall/js"
+
 	// Import to initialize client auth plugins.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
@@ -105,4 +107,10 @@ func main() {
 	out, _ := new(engine.Engine).Render(c, vals)
 	templateString := out["test/templates/test.yaml"]
 	fmt.Println(templateString)
+
+	document := js.Global().Get("document")
+	p := document.Call("createElement", "p")
+	p.Set("innerHTML", templateString)
+	document.Get("body").Call("appendChild", p)
+
 }
