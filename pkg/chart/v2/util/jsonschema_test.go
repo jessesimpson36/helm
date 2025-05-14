@@ -19,7 +19,7 @@ package util
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v4/pkg/chart/v2/loader"
 	"os"
 	"testing"
 
