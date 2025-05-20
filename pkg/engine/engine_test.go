@@ -1336,6 +1336,44 @@ NestedHelperFunctions/charts/common/templates/_helpers_2.tpl:1:49
 	assert.Equal(t, expectedErrorMessage, err.Error())
 }
 
+func TestNestedHelpersProducesMultilineStacktraceDivideByZero(t *testing.T) {
+	c := &chart.Chart{
+		Metadata: &chart.Metadata{Name: "NestedHelperFunctions"},
+		Templates: []*chart.File{
+			{Name: "templates/svc.yaml", Data: []byte(
+				`name: {{ include "nested_helper.name" . }}`,
+			)},
+			{Name: "templates/_helpers_1.tpl", Data: []byte(
+				`{{- define "nested_helper.name" -}}{{- include "common.names.get_name" . -}}{{- end -}}`,
+			)},
+			{Name: "charts/common/templates/_helpers_2.tpl", Data: []byte(
+				`{{- define "common.names.get_name" -}}{{- div 42 0 -}}{{- end -}}`,
+			)},
+		},
+	}
+
+	expectedErrorMessage := `NestedHelperFunctions/templates/svc.yaml:1:9
+  executing "NestedHelperFunctions/templates/svc.yaml" at <include "nested_helper.name" .>:
+    error calling include:
+NestedHelperFunctions/templates/_helpers_1.tpl:1:39
+  executing "nested_helper.name" at <include "common.names.get_name" .>:
+    error calling include:
+NestedHelperFunctions/charts/common/templates/_helpers_2.tpl:1:42
+  executing "common.names.get_name" at <div 42 0>:
+    error calling div: runtime error: integer divide by zero`
+
+	v := chartutil.Values{}
+
+	val, _ := chartutil.CoalesceValues(c, v)
+	vals := map[string]interface{}{
+		"Values": val.AsMap(),
+	}
+	_, err := Render(c, vals)
+
+	assert.NotNil(t, err)
+	assert.Equal(t, expectedErrorMessage, err.Error())
+}
+
 func TestMultilineNoTemplateAssociatedError(t *testing.T) {
 	c := &chart.Chart{
 		Metadata: &chart.Metadata{Name: "multiline"},
