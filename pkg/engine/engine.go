@@ -45,6 +45,10 @@ var execErrFmtWithoutTemplate = regexp.MustCompile(`^template: (?P<templateName>
 // > "template: no template %q associated with template %q"
 var execErrNoTemplateAssociated = regexp.MustCompile(`^template: no template (?P<location>.*) associated with template (?P<functionName>(.*)?)$`)
 
+// taken from https://cs.opensource.google/go/go/+/refs/tags/go1.23.6:src/text/template/exec.go;l=816
+// > "error calling %s: %w"
+var execErrSafeCallPanic = regexp.MustCompile(`^error calling (?P<location>.*): (?P<errMsg>.*)$`)
+
 // Engine is an implementation of the Helm rendering implementation for templates.
 type Engine struct {
 	// If strict is enabled, template rendering will fail if a template references
@@ -400,6 +404,10 @@ func reformatExecErrorMsg(filename string, err error) error {
 				location:         templateName,
 				message:          errMsg,
 				executedFunction: "executing " + functionName + " at " + locationName + ":",
+			}
+			if matches := execErrSafeCallPanic.FindStringSubmatch(errMsg); matches != nil {
+				fileLocations = append(fileLocations, traceable)
+				break
 			}
 		} else if matches := execErrFmtWithoutTemplate.FindStringSubmatch(current.Error()); matches != nil {
 			templateName := matches[execErrFmt.SubexpIndex("templateName")]
