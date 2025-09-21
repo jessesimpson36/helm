@@ -361,3 +361,10 @@ func readSumFile(sumfile string) (string, error) {
 	parts := strings.SplitN(sig, " ", 2)
 	return parts[0], nil
 }
+
+func TestEd25519ExistsInKeyring(t *testing.T) {
+	_, err := NewFromKeyring("testdata/ed-keyring/exported-keyring.gpg", "Helm Signer")
+	if err != nil {
+		t.Errorf("Expected no errors, got %s", err)
+	}
+}
